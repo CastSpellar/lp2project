@@ -1,0 +1,77 @@
+options {
+LOOKAHEAD=1;
+}
+
+PARSER_BEGIN(Parser)
+public class Parser {}
+PARSER_END(Parser)
+
+SKIP :
+{
+        " "
+|       "\r"
+|       "\t"
+}
+
+TOKEN :
+{
+        < EOL: "\n" >
+|       < PLUS: "+" >
+|       < MINUS: "-" >
+|       < MULTIPLY: "*" >
+|       < DIVIDE: "/" >
+|       < LPAR: "(" >
+|       < RPAR: ")" >
+|       < CONSTANT: ( <DIGIT> )+ >
+|       < #DIGIT: ["0" - "9"] >
+|       < DECL: "decl" >
+|       < EQ: "=" >
+|       < IN: "in" >
+|       < END: "end" >
+|       < ID: ( <STRING> )+ >
+|       < #STRING: ["a" - "z"] >
+}
+
+IASTNode Start() :
+{ IASTNode t;}
+{
+    t = exp() <EOL>        { return t; }
+}
+
+IASTNode exp() :
+{ IASTNode l,r; }
+{
+    l = term() ( <PLUS> r = exp()  { l = new ASTAdd(l,r); }
+    		   | <MINUS> r = exp() { l = new ASTSub(l,r); } )*
+
+   { return l; }
+}
+
+IASTNode term() :
+{ IASTNode l,r; }
+{
+    l = factor() ( <MULTIPLY> r = term() { l = new ASTMul(l,r); }
+    			 | <DIVIDE> r = term()   { l = new ASTDiv(l,r); } )*
+
+   { return l; }
+}
+
+IASTNode factor() :
+{ IASTNode l,r; ASTDecl d; String id; }
+{
+    <CONSTANT> 
+
+		{ l = new ASTNum(Integer.parseInt(token.image)); 
+		  return l;}
+
+|   <LPAR> l = exp() <RPAR> 
+
+		{ return l; }
+         
+|	<DECL> { d = new ASTDecl(); }
+		( <ID> {id = token.image;} <EQ> l = exp() { d.addDecl(id,l);} )+  
+			<IN> r = exp() {d.setExpression(r);} <END> 
+			
+		{ return d; }
+|	<ID> { return new ASTId(token.image); }
+}
