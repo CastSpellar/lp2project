@@ -9,6 +9,7 @@ public class ASTSub implements IASTNode {
   public void gen(CodeSeq code,IEnvironment e){
       left.gen(code,e);
       right.gen(code,e);
+      bla bla bla
       code.gen_sub();
   }
 }
