@@ -250,7 +250,7 @@ IASTExpression factor() :
 |	<READINT> <LPAR> <RPAR> { return new ASTReadInt() ; }
 | 	<READSTR> <LPAR> <RPAR> { return new ASTReadStr() ; }
 |	<STRING> { return new ASTString(token.image) ; }
-|	<DO> s = cmd() <RETURN> e = logicalOr() <END> { return new ASTReturn(s, e) ; }
+|	<DO> s = cmd() <RETURN> e = logicalOr() <END> { return new ASTDoReturn(s, e) ; }
 |	<MINUS> e = factor() { return new ASTSymetric(e) ; }
 |	<LBRACK> { r = new ASTRecord() ; } <ID> { id = token.image ; } 
 	<EQ> e = logicalOr() { r.addRec(id, e) ; } (<COMMA> <ID> { id = token.image ; } 
