@@ -1,0 +1,197 @@
+options {
+LOOKAHEAD=1; 
+}
+
+PARSER_BEGIN(Parser)
+
+package t4.f1;
+
+public class Parser {}
+PARSER_END(Parser)
+
+SKIP :
+{
+        " "
+|       "\r"
+|       "\t"
+}
+
+TOKEN :
+{
+        < EOL: "\n" >
+|		< DECL: "decl" >
+|		< EQ: "=" >
+|		< IN: "in" >
+|		< END: "end" >
+|       < PLUS: "+" >
+|		< MINUS: "-" >
+|       < MULTIPLY: "*" >
+|		< DIVISION: "/" >
+|		< GREATER: ">" >
+|		< AND: "&" >
+|		< NOT: "not" >
+|		< VAR: "var" >
+|		< DEREF: "!" >
+|		< TRUE: "true" >
+|		< FALSE: "false" >
+|		< ASSIGN: ":=" >
+|		< WHILE: "while" >
+|		< DO: "do" >
+|		< IF: "if" >
+|		< THEN: "then" >
+|		< ELSE: "else" >
+|		< SEQ: ";" >
+|		< PRINT: "print" >
+|		< PRINTLN: "println" >
+|       < LPAR: "(" >
+|       < RPAR: ")" >
+|       < CONSTANT: ( <DIGIT> )+ >
+|		< ID: ( <SYMBOL> )  >
+|		< #SYMBOL: ["a" - "z", "A" - "Z"] >
+|       < #DIGIT: ["0" - "9"] >
+}
+
+IASTStatement Start() :
+{ IASTStatement c;}
+{
+    c = cmd() <EOL>        { return c; }
+}
+
+IASTStatement cmd() :
+{ IASTStatement l, r ;}
+{
+	l = state() ( <SEQ> r = cmd() { l = new ASTSeq(l, r) ;})*
+	{ return l ;}
+}
+
+IASTStatement state() :
+{ IASTStatement l, r, s ;
+  IASTExpression exp1, exp2 ;
+  ASTDeclStatement d ;
+  ASTProcCall pc;
+  String id ;
+ }
+{
+	exp1 = factor() (<ASSIGN> exp2 = decl() { 
+		l = new ASTAssign(exp1, exp2) ;
+		return l ;
+	}
+	| <LPAR> { pc = new ASTProcCall(exp1) ; }(exp2 = logical() { pc.addParam(exp2) ; }
+	  (<COMMA> exp2 = logical() { pc.addParam(exp2) ; })*)? <RPAR> { return pc ; })
+|	<WHILE> <LPAR> exp1 = decl() <RPAR> <DO> r = cmd() <END> {
+		l = new ASTWhile(exp1, r) ;
+		return l ;
+	}
+|	<IF> exp1 = decl() <THEN> l = cmd() <ELSE> r = cmd() {
+		s = new ASTIf(exp1, l, r) ;
+		return s ;
+	}
+|	<DECL> { d = new ASTDeclStatement() ; } ( <ID> { id = token.image ; }
+				<EQ> exp1 = decl() { d.addDecl(id, exp1) ; }) * 
+				      <IN> r = cmd() { d.setStatement(r) ; } <END>{
+				      	 return d ;
+	}
+| 	<PRINT> <LPAR> exp1 = decl() <RPAR> { 
+		s = new ASTPrint(exp1) ; 
+		return s ;
+	}
+|	<PRINTLN> <LPAR> <RPAR> { 
+		s = new ASTPrintln() ;
+		return s ;
+	}
+}
+
+IASTExpression decl() :
+{
+	IASTExpression l ;
+}
+{
+	l = logical() { return l ; }	
+|	<DECL> l = declExp() { return l ;}
+}
+
+IASTExpression declExp() :
+{
+	ASTDeclExpression d;
+  	IASTExpression exp, exp2 ;
+  	String id;
+}
+{
+  ({
+    d = new ASTDeclExpression();
+  }
+  (<ID>{
+    id = token.image;
+  }
+  <EQ>exp = exp(){
+    d.addDecl(id, exp);
+  }
+  )*<IN>exp2 = exp(){
+    d.setExpression(exp2);
+  }
+  <END>{
+    return d;
+  }
+  )
+}
+
+IASTExpression logical() :
+{
+	IASTExpression l, r ;
+}
+{
+	l = comp() ( <AND> r = comp() { l = new ASTAnd(l, r) ;})*
+	{ return l ;}
+}
+
+IASTExpression comp() :
+{
+	IASTExpression l, r ;
+}
+{
+	l = exp() ( <EQ> r = exp() { l = new ASTEqual(l, r) ;}
+			  | <GREATER> r = exp() { l = new ASTGreater(l, r) ;})*
+	{ return l ; }
+}
+
+IASTExpression exp() :
+{ 
+	IASTExpression l,r;
+}
+{
+    l = term() ( <PLUS> r = term() { l = new ASTAdd(l,r);}
+    		   | <MINUS> r = term() { l = new ASTSub(l,r) ;})*
+
+   { return l; }
+}
+
+IASTExpression term() :
+{ 
+	IASTExpression l,r;
+}
+{
+    l = factor() ( <MULTIPLY> r = factor() { l = new ASTMul(l,r);} 
+    			 | <DIVISION> r = factor() { l = new ASTDiv(l,r);})*
+
+   { return l; }
+}
+
+IASTExpression factor() :
+{ 
+	IASTExpression e, l; 
+}
+{
+    <CONSTANT> 
+
+         {  e = new ASTNum(Integer.parseInt(token.image)); return e;}
+
+|   <LPAR> e = exp() <RPAR> 
+|	<ID>   {e = new ASTId(token.image); return e ; }
+
+         { return e; }
+|	<NOT> e = factor() { l = new ASTNot(e) ; return l ; }
+| 	<VAR> <LPAR> e = exp() <RPAR> { l = new ASTVar(e) ; return l ; }
+|	<DEREF> e = factor() { l = new ASTDeref(e) ; return l ; }
+|	<TRUE> { l = new ASTBool(true) ; return l ;}
+|	<FALSE> { l = new ASTBool(false) ; return l ;}
+}

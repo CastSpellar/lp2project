@@ -1,0 +1,67 @@
+options {
+LOOKAHEAD=1; 
+}
+
+PARSER_BEGIN(Parser)
+
+package t2.f2 ;
+
+public class Parser {}
+PARSER_END(Parser)
+
+SKIP :
+{
+        " "
+|       "\r"
+|       "\t"
+}
+
+TOKEN :
+{
+        < EOL: "\n" >
+|       < PLUS: "+" >
+|		< MINUS: "-" >
+|       < MULTIPLY: "*" >
+|		< DIVISION: "/" >
+|       < LPAR: "(" >
+|       < RPAR: ")" >
+|       < CONSTANT: ( <DIGIT> )+ >
+|       < #DIGIT: ["0" - "9"] >
+}
+
+IASTNode Start() :
+{ IASTNode t;}
+{
+    t = exp() <EOL>        { return t; }
+}
+
+IASTNode exp() :
+{ IASTNode l,r; 
+  Token x; }
+{
+    l = term() [ <PLUS> r = exp() { l = new ASTAdd(l,r);}
+    		   | <MINUS> r = exp() { l = new ASTSub(l,r) ;}]
+
+   { return l; }
+}
+
+IASTNode term() :
+{ IASTNode l,r; Token x; }
+{
+    l = factor() [ <MULTIPLY> r = term() { l = new ASTMul(l,r);} 
+    			 | <DIVISION> r = term() { l = new ASTDiv(l,r);}]
+
+   { return l; }
+}
+
+IASTNode factor() :
+{ IASTNode e; }
+{
+    <CONSTANT> 
+
+         {  e = new ASTNum(Integer.parseInt(token.image)); return e;}
+
+|   <LPAR> e = exp() <RPAR> 
+
+         { return e; }
+}
