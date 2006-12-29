@@ -118,7 +118,7 @@ IASTStatement state() :
 		s = new ASTPrintln() ;
 		return s ;
 	}
-|	<FOREACH> <ID> { id = token.image ; }<IN> exp1 = exp() <DO> s = cmd() <END>{ return new ASTArrayIterator(exp1, id, s); }
+|	<FOREACH> <ID> { id = token.image ; }<IN> exp1 = exp() <DO> s = cmd() <END>{ return new ASTForEach(exp1, id, s); }
 }
 
 IASTExpression decl() :
