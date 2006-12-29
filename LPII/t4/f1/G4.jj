@@ -1,0 +1,260 @@
+options {
+LOOKAHEAD=1;
+}
+
+PARSER_BEGIN(Parser)
+package t4.f1;
+
+public class Parser {}
+PARSER_END(Parser)
+
+SKIP :
+{
+        " "
+|       "\r"
+|       "\t"
+|       "\n"
+}
+
+TOKEN :
+{
+        < EOL: ";;" >
+|		< SETA: "->" >
+|       < PLUS: "+" >
+|	    < MINUS: "-" >
+|       < MULTIPLY: "*" >
+|       < DIVIDE: "/" >
+|		< LPARFUN: "(fun" >
+|		< LPARPROC: "(proc" >       
+|       < LPAR: "(" >
+|       < RPAR: ")" >
+|       < CONSTANT: ( <DIGIT> )+ >
+|       < #DIGIT: ["0" - "9"] >
+
+|		< DECL: "decl" >
+|		< IN: "in" >
+|		< END: "end" >
+|		< ASSIGN: ":=" >
+|		< EQ: "=" >
+|		< GREATER: ">" >
+|		< AND: "&" >
+|		< NOT: "not" >
+|		< VAR: "var" >
+|		< DEREF: "!" >
+|		< TRUE: "true" >
+|		< FALSE: "false" >
+|		< WHILE: "while" >
+|		< DO: "do" >
+|		< IF: "if" >
+|		< THEN: "then" >
+|		< ELSE: "else" >
+|		< PTVIRG: ";" >
+|		< PRINTLN: "println" >
+|		< PRINT: "print" >
+/*|		< FUN: "fun" >*/
+/*|		< PROC: "proc" >*/
+|		< RETURN: "return" >
+|		< VIRG: "," >
+|		< ID: ["a" - "z","A" - "Z","_"] ( ["a" - "z","A" - "Z","_"] | <DIGIT> )* >
+} //todo o resto dos tokens q nao estao aqui, vao dar erro
+
+IASTStatement Start() :
+{ IASTStatement c; }
+{
+    c = cmd() <EOL>        { return c; }
+}
+
+IASTStatement cmd(): 
+{
+	IASTStatement c, com1;
+}
+{
+	c = stat() ( <PTVIRG> com1 = stat() { c = new ASTSeq(c, com1); } )* 
+	{ return c; }
+}
+
+IASTStatement stat() :
+{ IASTStatement c,com1,com2;
+  IASTExpression e1, e2;
+  String id;
+  List<Double<IASTExpression>> list;
+  List<IASTExpression> list1;
+}
+{	
+// 	<IF> e1 = exp() <THEN> com1 = cmd() <ELSE> com2 = cmd() <END>
+//	{ c = new ASTIf(e1,com1,com2); return c;} 
+
+ 	<IF> e1 = exp() <THEN> com1 = cmd() 
+ 	( <ELSE> com2 = cmd() <END> {c = new ASTIf(e1,com1,com2); } 
+ 	| <END> {c = new ASTIf(e1,com1,null); } )
+	{ return c;} 
+
+// 	<IF> e1 = exp() <THEN> com1 = cmd() 
+// 	( <ELSE> com2 = cmd() <END> {c = new ASTIf(e1,com1,com2); } 
+// 	| <END> {c = new ASTIf(e1,com1,null); } )+
+//	{ return c;} 
+
+|	<PRINT> <LPAR> e1 = exp() <RPAR> { c = new ASTPrint(e1); return c; } 
+
+|	<PRINTLN> <LPAR> <RPAR> { c = new ASTPrintln(); return c; }
+
+|	<WHILE> e1 = exp() <DO> com1 = cmd() <END> { c = new ASTWhile(e1, com1); return c; }
+
+//token.image -> da o ultimo TOKEN lido (String)
+| 	<DECL> { list = new LinkedList<Double<IASTExpression>>(); } 
+	( <ID> { id = token.image; } <EQ> e1 = exp() 
+	{ for(int i = 0; i < list.size(); i++)
+		if(list.get(i).getId().compareTo(id) == 0)
+			throw new ParseException();
+	  list.add(new Double<IASTExpression>(id,e1)); 
+	} )+ <IN> com1 = cmd() <END> { c = new ASTDeclProc(list,com1); return c; }
+
+|   e1 = factor() 
+		( 
+		  <LPAR> {list1 = new LinkedList<IASTExpression>(); }
+		( <RPAR> | e2 = exp() { list1.add(e2); }
+		( <VIRG> e2 = exp() { list1.add(e2); } )* <RPAR> )
+		{ c = new ASTProcCall(e1, list1);} 
+		|
+		<ASSIGN> e2 = exp() { c = new ASTAssign(e1,e2); }
+		)
+	
+//|	e1 = exp() //se este aparece-se antes do <DECL> por exemplo, torna-o "unreachable code"
+//		<ASSIGN> e2 = exp() { c = new ASTAssign(e1,e2); } 
+		
+    { return c; }
+}
+
+IASTExpression exp() :
+{
+  IASTExpression exp1, exp2;
+}
+{
+    exp1 = exp1() ( <AND> exp2 = exp1() { exp1 = new ASTAnd(exp1,exp2); } )*
+	{ return exp1; }
+}
+
+IASTExpression exp1() :
+{
+  IASTExpression l, r;
+}
+{
+	l = exp2() ( ( <EQ>  r = exp2() { l = new ASTEq(l,r);} | <GREATER>  r = exp2() { l = new ASTGt(l,r);} ) )*
+	{ return l; }
+}
+
+IASTExpression exp2() :
+{ 
+	IASTExpression l,r; 
+}
+{	
+   l = term() ( ( <PLUS> r = term() { l = new ASTAdd(l,r);} | <MINUS> r = term() { l = new ASTSub(l,r);} ) )*
+   { return l; }
+}
+
+IASTExpression term() :
+{ 
+	IASTExpression l,r;
+}
+{
+    l = factor1() ( ( <MULTIPLY> r = factor1() { l = new ASTMul(l,r); } | <DIVIDE> r = factor1() { l = new ASTDiv(l,r);} )  )* 
+   { return l; }
+}
+
+IASTExpression factor1() :
+{
+	IASTExpression exp1,exp2;
+	List<IASTExpression> list1;
+}
+{	//exp1 = exp()
+//	exp1 = factor() ( <LPAR> exp2 = exp() 
+//	{ list1 = new LinkedList<IASTExpression>(); list1.add(exp2); }
+//	( <VIRG> exp2 = exp() { list1.add(exp2); } )* 
+// 	<RPAR> { exp1 = new ASTFunCall(exp1, list1); } )*
+// 	 { return exp1; }
+
+	exp1 = factor() ( <LPAR> {list1 = new LinkedList<IASTExpression>(); }
+	( <RPAR> | exp2 = exp() { list1.add(exp2); }
+	( <VIRG> exp2 = exp() { list1.add(exp2); } )* <RPAR> )
+  	{ exp1 = new ASTFunCall(exp1, list1); } )*
+ 	{ return exp1; }
+
+//	exp1 = factor() ( <LPAR> exp2 = exp() <RPAR> 
+//	{ exp1 = new ASTFunCall(exp1, exp2); } )*
+//	{ return exp1; }
+    
+}
+
+IASTExpression factor() :
+{ 
+  IASTStatement c;
+  IASTExpression e,exp1,exp2;
+  String id;
+  List<Double<IASTExpression>> list;
+  List<String> list1;
+}
+{
+    <CONSTANT> { e = new ASTNum(Integer.parseInt(token.image)); return e; }
+
+//aparece primeiro que <LPAR> e = exp() <RPAR> para ter prioridade sobre ele
+//|	/*<LPAR> <FUN>*/ <LPARFUN> <ID> 
+//	{ list1 = new LinkedList<String>(); id = token.image; list1.add(id); }
+//	( <VIRG> <ID> { id = token.image; 
+//	for(int i = 0; i < list1.size(); i++)
+//		if(list1.get(i).compareTo(id) == 0)
+//			throw new ParseException();		
+//	list1.add(id); } )* 
+//	<SETA> exp2 = exp() <RPAR> { e = new ASTFun(list1, exp2); return e; }
+
+|	/*<LPAR> <FUN>*/ <LPARFUN> {list1 = new LinkedList<String>(); } 
+	( <SETA> | <ID> { id = token.image; list1.add(id); }
+	( <VIRG> <ID> { id = token.image; 
+	for(int i = 0; i < list1.size(); i++)
+		if(list1.get(i).compareTo(id) == 0)
+			throw new ParseException();		
+	list1.add(id); } )* <SETA> ) 
+	exp2 = exp() <RPAR> { e = new ASTFun(list1, exp2); return e; }
+
+//aparece primeiro que <LPAR> e = exp() <RPAR> para ter prioridade sobre ele
+|   /*<LPAR> <PROC>*/ <LPARPROC> {list1 = new LinkedList<String>(); }
+	( <SETA> | <ID> { id = token.image; list1.add(id); }
+	( <VIRG> <ID> { id = token.image; 
+	for(int i = 0; i < list1.size(); i++)
+		if(list1.get(i).compareTo(id) == 0)
+			throw new ParseException();		
+	list1.add(id); } )* <SETA> ) 
+	c = cmd() <RPAR> { e = new ASTProc(list1, c); return e; }
+
+|   <LPAR> e = exp() <RPAR> { return e; }
+                   
+|	<ID> { e = new ASTId(token.image); return e; }
+				
+//-----------------		 
+|   <NOT> exp1 = exp() { e = new ASTNot(exp1); return e; }
+
+|   <FALSE> { e = new ASTBool(false); return e; }
+
+|   <TRUE> { e = new ASTBool(true); return e; }
+
+|	<DEREF> exp1 = factor() { e = new ASTDeref(exp1); return e; }
+
+|   <VAR> <LPAR> exp1 = exp() <RPAR> { e = new ASTVar(exp1); return e; }
+//|   <VAR> <LPAR> exp1 = exp2() <RPAR> { e = new ASTVar(exp1); return e; }
+//nao vale a pena manda-lo para os "ands" e etc
+
+//--------------------
+    
+|	<DO> c = cmd() <RETURN> exp1 = exp() <END> 
+	{ e = new ASTDoReturn(c, exp1); return e; }
+	
+|	<DECL> { list = new LinkedList<Double<IASTExpression>>(); } 
+	( <ID> { id = token.image; } <EQ> exp1 = exp() 
+	{ for(int i = 0; i < list.size(); i++)
+		if(list.get(i).getId().compareTo(id) == 0)
+			throw new ParseException();
+	  list.add(new Double<IASTExpression>(id,exp1)); 
+	} )+ <IN> exp2 = exp() <END> { e = new ASTDeclExp(list,exp2); return e;}
+	
+}
+
+

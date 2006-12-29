@@ -1,0 +1,85 @@
+options {
+LOOKAHEAD=1; 
+}
+
+PARSER_BEGIN(Parser)
+
+package t3.f1;
+
+public class Parser {}
+PARSER_END(Parser)
+
+SKIP :
+{
+        " "
+|       "\r"
+|       "\t"
+}
+
+TOKEN :
+{
+        < EOL: "\n" >
+|		< DECL: "decl" >
+|		< EQ: "=" >
+|		< IN: "in" >
+|		< END: "end" >
+|       < PLUS: "+" >
+|		< MINUS: "-" >
+|       < MULTIPLY: "*" >
+|		< DIVISION: "/" >
+|       < LPAR: "(" >
+|       < RPAR: ")" >
+|       < CONSTANT: ( <DIGIT> )+ >
+|		< ID: ( <SYMBOL> )  >
+|		< #SYMBOL: ["a" - "z", "A" - "Z"] >
+|       < #DIGIT: ["0" - "9"] >
+}
+
+IASTNode Start() :
+{ IASTNode t;}
+{
+    t = exp() <EOL>        { return t; }
+}
+
+IASTNode exp() :
+{ IASTNode l,r; 
+  Token x; }
+{
+    l = term() ( <PLUS> r = term() { l = new ASTAdd(l,r);}
+    		   | <MINUS> r = term() { l = new ASTSub(l,r) ;})*
+
+   { return l; }
+}
+
+IASTNode term() :
+{ IASTNode l,r; Token x; }
+{
+    l = factor() ( <MULTIPLY> r = factor() { l = new ASTMul(l,r);} 
+    			 | <DIVISION> r = factor() { l = new ASTDiv(l,r);})*
+
+   { return l; }
+}
+
+IASTNode factor() :
+{ IASTNode e; }
+{
+    <CONSTANT> 
+
+         {  e = new ASTNum(Integer.parseInt(token.image)); return e;}
+
+|   <LPAR> e = exp() <RPAR> 
+|	<ID>   {e = new ASTId(token.image); return e ; }
+
+         { return e; }
+|	<DECL>  e = decl() {return e ; }
+}
+
+IASTNode decl() :
+{ ASTDecl d ;
+  IASTNode e ;
+  String id ;
+}
+{ 
+	{ d = new ASTDecl() ; } (<ID> {id = token.image ; } <EQ> e=exp ( ) {d.addDecl(id ,e);})*
+	<IN> e = exp ( ) {d.setExpression(e);}<END>{ return d ; }
+}
