@@ -4,20 +4,20 @@ import java.util.List;
 
 public class FunVal implements IVal {
 	
-	private List<String> params;
+	private List<String> vars;
 	
 	private IASTExpression expression;
 	
 	private IEnv env;
 	
-	public FunVal(List<String> params,IASTExpression expression,IEnv env){
-	  this.params = params;
+	public FunVal(List<String> vars,IASTExpression expression,IEnv env){
+	  this.vars = vars;
 	  this.expression = expression;
 	  this.env = env;
 	}
 	
-	public List<String> getParams(){
-		return params;
+	public List<String> getVars(){
+		return vars;
 	}
 	
 	public IASTExpression getExpression(){
