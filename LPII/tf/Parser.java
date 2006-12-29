@@ -38,7 +38,7 @@ public class Parser implements ParserConstants {
   IASTExpression exp1, exp2 ;
   ASTDeclStatement d ;
   String id ;
-  ASTProcCall pc ;
+  ASTCallProc pc ;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case MINUS:
     case NOT:
@@ -68,7 +68,7 @@ public class Parser implements ParserConstants {
         break;
       case LPAR:
         jj_consume_token(LPAR);
-                   pc = new ASTProcCall(exp1) ;
+                   pc = new ASTCallProc(exp1) ;
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
         case DECL:
         case MINUS:
