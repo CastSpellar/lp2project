@@ -222,7 +222,7 @@ IASTExpression callFun():{
 	f = factor() ((<LPAR> { cf = new ASTCallFun(f) ; } (e = factor() { cf.addArg(e) ; }
 	(<COMMA> e = factor() { cf.addArg(e) ; })*)? <RPAR>)
 |	<DOT> <ID> { cr = new ASTCallRec(f, token.image) ; f = cr ;}
-|	<LBRACK> { ca = new ASTCallArray(f) ; } e = factor() <RBRACK> { ca.pos(e) ; f = ca ; })*
+|	<LBRACK> { ca = new ASTCallArray(f) ; } e = factor() <RBRACK> { ca.setPos(e) ; f = ca ; })*
 	{ return f ; }
 }
 
