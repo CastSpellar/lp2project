@@ -90,14 +90,14 @@ IASTStatement state() :
   IASTExpression exp1, exp2 ;
   ASTDeclStatement d ;
   String id ;
-  ASTProcCall pc ;
+  ASTCallProc pc ;
  }
 {
 	exp1 = callFun() (<ASSIGN> exp2 = decl() { 
 		l = new ASTAssign(exp1, exp2) ;
 		return l ;
 	}
-	| <LPAR> { pc = new ASTProcCall(exp1) ; }(exp2 = decl() { pc.addParam(exp2) ; }
+	| <LPAR> { pc = new ASTCallProc(exp1) ; }(exp2 = decl() { pc.addParam(exp2) ; }
 	  (<COMMA> exp2 = decl() { pc.addParam(exp2) ; })*)? <RPAR> { return pc ; })
 |	<WHILE> <LPAR> exp1 = decl() <RPAR> <DO> r = cmd() <END> {
 		l = new ASTWhile(exp1, r) ;
