@@ -18,7 +18,9 @@ public class ASTSmallerOrEqual implements IASTExpression {
 
 	public void gen(CodeSeq code, ICodeEnv env) {
 		// TODO Auto-generated method stub
-
+		left.gen(code, env) ;
+		right.gen(code, env) ;
+		code.gen_smallerorequal() ;
 	}
 
 }

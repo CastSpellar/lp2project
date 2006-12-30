@@ -2,6 +2,7 @@ package tf;
 
 import java.util.List;
 import java.util.LinkedList;
+import java.util.Vector;
 
 public class ASTFun implements IASTExpression {
 
@@ -10,7 +11,7 @@ public class ASTFun implements IASTExpression {
 	private IASTExpression expressions; 
 	
 	public ASTFun(){
-		params = new LinkedList() ;
+		params = new LinkedList<String>() ;
 	}
 	
 	public void addParam(String param){
@@ -30,22 +31,20 @@ public class ASTFun implements IASTExpression {
 		// TODO Auto-generated method stub
 		int pos = code.code.size() ;
 		code.gen_ldloc("stackframe") ;
-		
+		code.gen_ldfnt(pos) ;
+		code.gen_new_closure() ;
+		Vector<String> newFun = new Vector<String>(code.size) ;
+		Vector<String> currRep = code.rep ;
+		int pc = code.pc ;
+		code.pc = 0 ;
+		code.code.add(newFun) ;
+		code.rep = newFun ;
+		code.gen_new_fun(pos) ;
+		env = env.beginScope() ;
+		for(String id: params)
+			env.newVar(id) ;
+		expressions.gen(code, env) ;
+		code.rep = currRep ;
+		code.pc = pc ;
 	}
-	
-	/*int pos = code.getCodesSize();
-		code.gen_ldloc("stackframe");
-		code.gen_ldftn("object" , new String("f"+pos) );
-		code.gen_closure();
-				
-		code.switchNext();
-		code.gen_func( pos );
-		cenv=cenv.beginScope();
-		Iterator<String> it = args.iterator();
-		while( it.hasNext() )
-			cenv.AssocC(it.next());
-		exp.gen(code, cenv);
-		code.switchPrevious();
-		cenv.endScope();*/
-
 }

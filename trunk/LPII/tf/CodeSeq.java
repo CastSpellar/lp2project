@@ -10,12 +10,15 @@ public class CodeSeq {
 	Vector<String> rep;
 
 	int pc;
+	
+	int size ;
 
 	CodeSeq(int size) {
 		code = new Vector<Vector<String>>() ;
 		rep = new Vector<String>(size);
 		code.add(rep) ;
 		pc = 0;
+		this.size = size ;
 	}
 
 	public void gen_ldc_i4(int k) {
@@ -84,7 +87,7 @@ public class CodeSeq {
 	}
 	
 	public void get_bool() {
-		rep.add(pc++, "callvirt instance bool [Runtime]BoolValue::getBool()");
+		rep.add(pc++, "callvirt instance bool [Runtime]Boolean::getBool()");
 	}
 	
 	public void gen_br(boolean type, int val){
@@ -102,6 +105,14 @@ public class CodeSeq {
 		rep.add(pc++, "call class [Runtime]Boolean class [Runtime]Integer::'greaterorequal'(object,object)") ;
 	}
 	
+	public void gen_smaller(){
+		rep.add(pc++, "call class [Runtime]Boolean class [Runtime]Integer::'smaller'(object,object)") ;
+	}
+	
+	public void gen_smallerorequal(){
+		rep.add(pc++, "call class [Runtime]Boolean class [Runtime]Integer::'smallerorequal'(object,object)") ;
+	}
+	
 	public void gen_assign(){
 		rep.add(pc++, "callvirt instance object [Runtime]Cell::'setVal'(object)") ;
 	}
@@ -114,7 +125,7 @@ public class CodeSeq {
 		rep.add(pc++,"call void class [mscorlib]System.Console::WriteLine()");
 	}
 	
-	public void gen_newStackFrame(){
+	public void gen_new_stack_frame(){
 		rep.add(pc++, "newobj instance void [Runtime]StackFrame::.ctor" + "(class [Runtime]StackFrame, int32)");
 	}
 	
@@ -130,13 +141,57 @@ public class CodeSeq {
 		rep.add(pc++, "callvirt instance object [Runtime]StackFrame::get(object, object)") ;
 	}
 	
-	public void gen_ldfnt(){
-		rep.add(pc++, "ldftn "+ret+" "+id+"(object)");
+	public void gen_fun_get(){
+		rep.add(pc++, "callvirt instance object [Runtime]Closure::getFunc()"); 
 	}
+	
+	public void gen_ldfnt(int id){
+		rep.add(pc++, "ldftn object " + "f" + id + "(object)");
+	}
+	
+	public void gen_new_closure(){
+		rep.add(pc++, "newobj instance void [Runtime]Closure::.ctor" + "(class [Runtime]StackFrame, object)"); 
+	}
+	
+	public void gen_dup(){
+		rep.add(pc++, "dup");
+	}
+	
+	public void gen_get_env(){
+		rep.add(pc++, "newobj instance void [Runtime]Closure::.ctor" + "(class [Runtime]StackFrame, object)");
+	}
+	
+	public void gen_call(){
+		rep.add(pc++, "calli object(object)");
+	}
+	
+	public void gen_cell(){
+		rep.add(pc++, "newobj instance void [Runtime]Cell::.ctor(int32)");
+	}
+	
+	public void gen_get_cell(){
+		rep.add(pc++, "callvirt instance object [Runtime]Cell::getVal()");
+	}
+	
+	public void gen_new_fun(int id){
+		rep.add(pc++, ".method public static hidebysig default object f"+ id  +"(object) cil managed");
+		rep.add(pc++, "{");
+		rep.add(pc++,".maxstack 1000");
+		rep.add(pc++,".locals init (object stackframe, object tmp, object tmp2)");
+		rep.add(pc++,"ldarg 0");
+		rep.add(pc++,"stloc stackframe");
+	}
+	
+	/*rep.add(pc++, ".method public static hidebysig default object f"+ id 
+						+"(object) cil managed"); */
 
 	public void dump(PrintStream out) {
-		for (int i = 0; i < pc; i++)
-			out.println(rep.get(i));
+		for(Vector<String> r: code){
+			for(int i = 0; i < r.size(); i++)
+				out.println(r.get(i)) ;
+		}
+		/*for (int i = 0; i < pc; i++)
+			out.println(rep.get(i));*/
 	}
 
 	static public void preamble(PrintStream out) {

@@ -38,7 +38,23 @@ public class ASTCallFun implements IASTExpression {
 
 	public void gen(CodeSeq code, ICodeEnv env) {
 		// TODO Auto-generated method stub
-
+		id.gen(code, env) ;
+		code.gen_dup() ;
+		code.gen_get_env() ;
+		code.gen_ldc_i4(params.size()) ;
+		code.gen_new_stack_frame() ;
+		int i = 0 ;
+		for(IASTExpression param: params){
+			code.gen_dup() ;
+			param.gen(code, env) ;
+			code.gen_ldc_i4(i++) ;
+			code.gen_frameset() ;
+		}
+		code.gen_stloc("tmp");
+		code.gen_stloc("tmp2");
+		code.gen_ldloc("tmp");
+		code.gen_ldloc("tmp2");
+		code.gen_fun_get() ;
+		code.gen_call() ;
 	}
-
 }

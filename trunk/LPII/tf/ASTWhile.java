@@ -19,7 +19,15 @@ public class ASTWhile implements IASTStatement{
 
 	public void gen(CodeSeq code, ICodeEnv env) {
 		// TODO Auto-generated method stub
-		
+		int label1 = code.pc ;
+		code.gen_label(label1) ;
+		exp.gen(code, env) ;
+		code.get_bool() ;
+		int label2 = code.pc ;
+		code.gen_br(false, label2) ;
+		command.gen(code, env) ;
+		code.gen_br(true, label1) ;
+		code.gen_label(label2) ;
 	}
 
 }
