@@ -1,0 +1,297 @@
+options {
+LOOKAHEAD=1; 
+}
+
+PARSER_BEGIN(Parser)
+
+package tf;
+
+public class Parser {}
+PARSER_END(Parser)
+
+SKIP :
+{
+        " "
+|       "\r"
+|       "\t"
+|		"\n"
+}
+
+TOKEN :
+{
+		< EOL: ";;">
+|		< DECL: "decl" >
+|		< EQ: "=" >
+|		< DIFF: "!=" >
+|		< IN: "in" >
+|		< END: "end" >
+|       < PLUS: "+" >
+|		< MINUS: "-" >
+|       < MULTIPLY: "*" >
+|		< DIVISION: "/" >
+|		< MOD: "%" >
+|		< GREATER: ">" >
+|		< GREATEROREQUAL: ">=" >
+|		< SMALLER: "<" >
+|		< SMALLEROREQUAL: "<=" >
+|		< AND: "&" >
+|		< OR: "|" >
+|		< NOT: "not" >
+|		< VAR: "var" >
+|		< DEREF: "!" >
+|		< TRUE: "true" >
+|		< FALSE: "false" >
+|		< ASSIGN: ":=" >
+|		< WHILE: "while" >
+|		< DO: "do" >
+|		< IF: "if" >
+|		< THEN: "then" >
+|		< ELSE: "else" >
+|		< SEQ: ";" >
+|		< PRINT: "print" >
+|		< PRINTLN: "println" >
+|       < LPAR: "(" >
+|       < RPAR: ")" >
+|		< FUN: "fun" >
+|		< PROC: "proc" >
+|		< ARRAY: "array" >
+|		< LBRACK: "[" >
+| 		< RBRACK: "]" >
+|		< COMMA: "," >
+|		< DOT: "." >
+|		< IS: "=>" >
+|		< LENGTH: "length" >
+|		< READINT: "readInt" >
+|		< READSTR: "readString" >
+|		< FOREACH: "foreach" >
+|		< RETURN: "return" >
+|		< STRING:    "\"" ((~["\\","\"","\n","\r"])| ("\\" ( ["n","t","b","r","f","\\","'","\""] | ["0"-"7"] ( ["0"-"7"] )?| ["0"-"3"] ["0"-"7"] ["0"-"7"])))* "\"">
+|       < CONSTANT: ( <DIGIT> )+ >
+|		< ID: ( <SYMBOL> )+  >
+|		< #SYMBOL: ["a" - "z", "A" - "Z", "0" - "9"] >
+|       < #DIGIT: ["0" - "9"] >
+}
+
+IASTStatement Start() :
+{ IASTStatement c;}
+{
+    c = seq() <EOL>        { return c; }
+}
+
+IASTStatement seq() :
+{ IASTStatement l, r ;}
+{
+	l = cmd() ( <SEQ> r = cmd() { l = new ASTSeq(l, r) ;} )*
+	{ return l ;}
+}
+
+IASTStatement cmd() :
+{ IASTStatement l, r, s ;
+  ASTIf ifstat ;
+  IASTExpression exp1, exp2 ;
+  ASTDeclStatement d ;
+  String id ;
+  ASTCallProc pc ;
+ }
+{
+	exp1 = callFun() (
+	<ASSIGN> exp2 = logical() 
+	{ 	l = new ASTAssign(exp1, exp2) ; return l ;}
+| 	<LPAR> { pc = new ASTCallProc(exp1) ; } 
+			[ exp2 = logical() { pc.addParam(exp2) ; } (<COMMA> exp2 = logical() { pc.addParam(exp2) ; })* ] 
+	<RPAR> 
+	{ 	return pc ; })
+|	<WHILE> <LPAR> exp1 = logical() <RPAR> <DO> r = seq() <END> 
+	{	l = new ASTWhile(exp1, r) ; return l ;}
+|	<IF> exp1 = logical() <THEN> l = cmd() { ifstat = new ASTIf(exp1, l) ; }
+	[ <ELSE> r = seq() { ifstat.setElse(r) ; } ] 
+	{ 	return ifstat ; }
+|	<DECL> d = declStat()
+	{ 	return d ; }
+| 	<PRINT> <LPAR> exp1 = logical() <RPAR>
+	 {	s = new ASTPrint(exp1) ; 
+		return s ; }
+|	<PRINTLN> <LPAR> <RPAR> 
+	{ 	s = new ASTPrintln() ;	return s ; }
+|	<FOREACH> <ID> { id = token.image ; }
+						<IN> exp1 = exp() <DO>
+						 s = seq() 
+	<END> 
+	{	return new ASTForEach(exp1, id, s); }
+}
+
+IASTExpression logical() :
+{
+	IASTExpression l ;
+}
+{
+	l = logicalOr() 
+	{ return l ; }	
+|	<DECL> l = declExp() 
+	{ return l ;}
+}
+
+IASTExpression logicalOr() :
+{
+	IASTExpression l, r ;
+}
+{	
+	l = logicalAnd() ( <OR> r = logicalAnd() { l = new ASTOr(l, r) ; } )*
+	{ return l ; }
+}
+
+IASTExpression logicalAnd() :
+{
+	IASTExpression l, r, elseExp ;
+	ASTIfExpression ife ;
+}
+{
+	l = comp() ( 
+	<AND> r = comp() { l = new ASTAnd(l, r) ;})* 
+	{ return l ;}
+}
+
+IASTExpression comp() :
+{
+	IASTExpression l, r ;
+}
+{
+	l = exp() ( 
+	<EQ> r = exp() { l = new ASTEqual(l, r) ;}
+| 	<GREATER> r = exp() { l = new ASTGreater(l, r) ;}
+|	<SMALLER> r = exp() { l = new ASTSmaller(l, r) ; }
+| 	<GREATEROREQUAL> r = exp() { l = new ASTGreaterOrEqual(l, r) ; }
+| 	<SMALLEROREQUAL> r = exp() { l = new ASTSmallerOrEqual(l, r) ; }
+| 	<DIFF> r = exp() { l = new ASTDiff(l, r) ; }
+	)*
+	{ return l ; }
+}
+
+IASTExpression exp() :
+{ 
+	IASTExpression l,r;
+}
+{
+    l = term() ( 
+    <PLUS> r = term() { l = new ASTAdd(l,r);}
+| 	<MINUS> r = term() { l = new ASTSub(l,r) ;}
+	)*
+	{ return l; }
+}
+
+IASTExpression term() :
+{ 
+	IASTExpression l,r;
+}
+{
+    l = callFun() ( 
+    <MULTIPLY> r = factor() { l = new ASTMul(l,r);} 
+| 	<DIVISION> r = factor() { l = new ASTDiv(l,r);}
+|	<MOD> r = factor() { l = new ASTMod(l, r) ; }
+	)*
+	{ return l; }
+|	<IF> l = logicalOr() <THEN> r = comp() { ife = new ASTIfExpression(l, r) ; } 
+	[ <ELSE> elseExp = comp() { ife.setElse(elseExp) ; } ] 
+	<END> 
+	{ return ife ; }
+}
+
+IASTExpression callFun():{
+  IASTExpression f, e;
+  ASTCallFun cf;
+  ASTCallArray ca;
+  ASTCallRec cr ;
+}
+{
+	f = factor() (
+	(<LPAR> { cf = new ASTCallFun(f) ; } 
+		[ e = logical() { cf.addArg(e) ; } (<COMMA> e = logical() { cf.addArg(e) ; })* ]
+	<RPAR>) { f = cf ; }
+|	<DOT> <ID> { cr = new ASTCallRec(f, token.image) ; f = cr ;}
+|	<LBRACK> { ca = new ASTCallArray(f) ; } e = logical() <RBRACK> { ca.setPos(e) ; f = ca ; } 
+	)*
+	{ return f ; }
+}
+
+IASTExpression factor() :
+{ 
+	IASTExpression e, l;
+	IASTStatement s ;
+	ASTRecord r ;
+	String id ;
+}
+{
+    <CONSTANT> 																	{ e = new ASTNum(Integer.parseInt(token.image)); return e;}
+|   <LPAR> e = logical() <RPAR> 												{ return e ; }
+|	<ID>   																				{e = new ASTId(token.image); return e ; }
+|	<NOT> e = factor() 																{ l = new ASTNot(e) ; return l ; }
+| 	<VAR> <LPAR> e = logical() <RPAR> 									{ l = new ASTVar(e) ; return l ; }
+|	<DEREF> e = callFun() 														{ l = new ASTDeref(e) ; return l ; }
+|	<TRUE> 																			{ l = new ASTBool(true) ; return l ;}
+|	<FALSE> 																			{ l = new ASTBool(false) ; return l ;}
+|	<READINT> <LPAR> <RPAR> 												{ return new ASTReadInt() ; }
+| 	<READSTR> <LPAR> <RPAR> 											{ return new ASTReadStr() ; }
+|	<STRING> 																		{ return new ASTString(token.image) ; }
+|	<DO> s = seq() <RETURN> e = logicalOr() <END>					{ return new ASTDoReturn(s, e) ; }
+|	<MINUS> e = factor() 															{ return new ASTSymetric(e) ; }
+|	<LBRACK> { r = new ASTRecord() ; } 
+		( <ID> { id = token.image ; } <EQ> e = logical() { r.addRec(id, e) ; } )+
+	<RBRACK>																		{ return r ; }
+|	<FUN> e = fun() 																{ return e ; }
+| 	<PROC> e = proc() 																{ return e ; }
+|	<ARRAY> <LPAR> e = logical() <COMMA> l = exp() <RPAR> 	{ return new ASTArray(e, l) ; }
+| 	<LENGTH> <LPAR> e = logical() <RPAR> 								{ return new ASTLength(e); }
+}
+
+IASTStatement declStat() :
+{
+	ASTDeclStatement d;
+	IASTExpression exp;
+	IASTStatement stat;
+  	String id;
+}
+{ 
+  	{ d = new ASTDeclStatement(); }
+  	(<ID>{ id = token.image; } <EQ>exp = exp(){ d.addDecl(id, exp); } )*
+  	<IN>stat = seq(){ d.setStatement(stat); }
+  	<END>
+  	{ return d; }
+}
+
+IASTExpression declExp() :
+{
+	ASTDeclExpression d;
+  	IASTExpression exp, exp2 ;
+  	String id;
+}
+{ 
+  	{ d = new ASTDeclExpression(); }
+  	(<ID>{ id = token.image; } <EQ>exp = exp(){ d.addDecl(id, exp); } )*
+  	<IN>exp2 = exp(){ d.setExpression(exp2); }
+  	<END>
+  	{ return d; }
+}
+
+IASTExpression fun() :
+{
+	ASTFun f ;
+	IASTExpression e ;
+}
+{
+	{ f = new ASTFun() ; }
+	[ <ID> { f.addParam(token.image) ; } (<COMMA> <ID> { f.addParam(token.image) ;})* ]
+	<IS> e = logical() { f.setExpression(e) ; } <END>
+	{ return f ; }
+}
+
+IASTExpression proc() :
+{
+	ASTProc p ;
+	IASTStatement s ;
+}
+{
+	{ p = new ASTProc() ;}
+	[ <ID> { p.addParam(token.image) ; } (<COMMA> <ID> { p.addParam(token.image) ; })* ]
+	<IS> s = seq() { p.setStatement(s) ; } <END>
+	{ return p ; }
+}
