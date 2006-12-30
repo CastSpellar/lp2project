@@ -119,48 +119,37 @@ IASTStatement cmd() :
 	{	return new ASTForEach(exp1, id, s); }
 }
 
-IASTExpression logical() :
-{
-	IASTExpression l ;
-}
-{
-	l = logicalOr() 
-	{ return l ; }	
-|	<DECL> l = declExp() 
-	{ return l ;}
-}
 
-IASTExpression logicalOr() :
+IASTExpression logical() :
 {
 	IASTExpression l, r ;
 }
 {	
-	l = logicalAnd() ( <OR> r = logicalAnd() { l = new ASTOr(l, r) ; } )*
+	l = logical2() ( <OR> r = logical2() { l = new ASTOr(l, r) ; } )*
 	{ return l ; }
 }
 
-IASTExpression logicalAnd() :
+IASTExpression logical2() :
 {
 	IASTExpression l, r;
 }
 {
-	l = comp() ( 
-	<AND> r = comp() { l = new ASTAnd(l, r) ;})* 
+	l = logical3() ( <AND> r = logical3() { l = new ASTAnd(l, r) ;} )* 
 	{ return l ;}
 }
 
-IASTExpression comp() :
+IASTExpression logical3() :
 {
 	IASTExpression l, r ;
 }
 {
 	l = exp() ( 
-	<EQ> r = exp() { l = new ASTEqual(l, r) ;}
-| 	<GREATER> r = exp() { l = new ASTGreater(l, r) ;}
-|	<SMALLER> r = exp() { l = new ASTSmaller(l, r) ; }
-| 	<GREATEROREQUAL> r = exp() { l = new ASTGreaterOrEqual(l, r) ; }
-| 	<SMALLEROREQUAL> r = exp() { l = new ASTSmallerOrEqual(l, r) ; }
-| 	<DIFF> r = exp() { l = new ASTDiff(l, r) ; }
+	<EQ> r = exp() 							{ l = new ASTEqual(l, r) ;}
+| 	<GREATER> r = exp() 					{ l = new ASTGreater(l, r) ;}
+|	<SMALLER> r = exp() 					{ l = new ASTSmaller(l, r) ; }
+| 	<GREATEROREQUAL> r = exp() 	{ l = new ASTGreaterOrEqual(l, r) ; }
+| 	<SMALLEROREQUAL> r = exp() 	{ l = new ASTSmallerOrEqual(l, r) ; }
+| 	<DIFF> r = exp() 						{ l = new ASTDiff(l, r) ; }
 	)*
 	{ return l ; }
 }
@@ -184,15 +173,17 @@ IASTExpression term() :
 }
 {
     l = callFun() ( 
-    <MULTIPLY> r = factor() { l = new ASTMul(l,r);} 
-| 	<DIVISION> r = factor() { l = new ASTDiv(l,r);}
-|	<MOD> r = factor() { l = new ASTMod(l, r) ; }
+    <MULTIPLY> r = factor() 	{ l = new ASTMul(l,r);} 
+| 	<DIVISION> r = factor() 	{ l = new ASTDiv(l,r);}
+|	<MOD> r = factor() 			{ l = new ASTMod(l, r) ; }
 	)*
 	{ return l; }
-|	<IF> l = logicalOr() <THEN> r = comp() { ife = new ASTIfExpression(l, r) ; } 
-	[ <ELSE> elseExp = comp() { ife.setElse(elseExp) ; } ] 
+|	<IF> l = logical() <THEN> r = logical3() { ife = new ASTIfExpression(l, r) ; } 
+	[ <ELSE> elseExp = logical3() { ife.setElse(elseExp) ; } ] 
 	<END> 
 	{ return ife ; }
+|	<DECL> l = declExp() 
+	{ return l ;}
 }
 
 IASTExpression callFun():{
@@ -231,7 +222,7 @@ IASTExpression factor() :
 |	<READINT> <LPAR> <RPAR> 												{ return new ASTReadInt() ; }
 | 	<READSTR> <LPAR> <RPAR> 											{ return new ASTReadStr() ; }
 |	<STRING> 																		{ return new ASTString(token.image) ; }
-|	<DO> s = seq() <RETURN> e = logicalOr() <END>					{ return new ASTDoReturn(s, e) ; }
+|	<DO> s = seq() <RETURN> e = logical() <END>					{ return new ASTDoReturn(s, e) ; }
 |	<MINUS> e = factor() 															{ return new ASTSymetric(e) ; }
 |	<LBRACK> { r = new ASTRecord() ; } 
 		( <ID> { id = token.image ; } <EQ> e = logical() { r.addRec(id, e) ; } )+
