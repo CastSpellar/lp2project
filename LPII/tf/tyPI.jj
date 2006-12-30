@@ -67,8 +67,8 @@ TOKEN :
 |		< RETURN: "return" >
 |		< STRING:    "\"" ((~["\\","\"","\n","\r"])| ("\\" ( ["n","t","b","r","f","\\","'","\""] | ["0"-"7"] ( ["0"-"7"] )?| ["0"-"3"] ["0"-"7"] ["0"-"7"])))* "\"">
 |       < CONSTANT: ( <DIGIT> )+ >
-|		< ID: ( <SYMBOL> )  >
-|		< #SYMBOL: ["a" - "z", "A" - "Z"] >
+|		< ID: ( <SYMBOL> )+  >
+|		< #SYMBOL: ["a" - "z", "A" - "Z", "0" - "9"] >
 |       < #DIGIT: ["0" - "9"] >
 }
 
@@ -107,7 +107,7 @@ IASTStatement state() :
 |	<IF> exp1 = decl() <THEN> l = cmd() { ifstat = new ASTIf(exp1, l) ; }(<ELSE> r = cmd() { ifstat.setElse(r) ; })? 
 	{ return ifstat ; }
 |	<DECL> { d = new ASTDeclStatement() ; } ( <ID> { id = token.image ; }
-				<EQ> exp1 = decl() { d.addDecl(id, exp1) ; }) * 
+				<EQ> exp1 = decl() { d.addDecl(id, exp1) ; })*
 				      <IN> r = cmd() { d.setStatement(r) ; } <END>{
 				      	 return d ;
 	}
@@ -220,10 +220,10 @@ IASTExpression callFun():{
   ASTCallRec cr ;
 }
 {
-	f = factor() ((<LPAR> { cf = new ASTCallFun(f) ; } (e = factor() { cf.addArg(e) ; }
-	(<COMMA> e = factor() { cf.addArg(e) ; })*)? <RPAR>)
+	f = factor() ((<LPAR> { cf = new ASTCallFun(f) ; } (e = decl() { cf.addArg(e) ; }
+	(<COMMA> e = decl() { cf.addArg(e) ; })*)? <RPAR>) { f = cf ; }
 |	<DOT> <ID> { cr = new ASTCallRec(f, token.image) ; f = cr ;}
-|	<LBRACK> { ca = new ASTCallArray(f) ; } e = factor() <RBRACK> { ca.setPos(e) ; f = ca ; })*
+|	<LBRACK> { ca = new ASTCallArray(f) ; } e = decl() <RBRACK> { ca.setPos(e) ; f = ca ; })*
 	{ return f ; }
 }
 
@@ -239,13 +239,11 @@ IASTExpression factor() :
 
          {  e = new ASTNum(Integer.parseInt(token.image)); return e;}
 
-|   <LPAR> e = logicalAnd() <RPAR> 
+|   <LPAR> e = decl() <RPAR> { return e ; }
 |	<ID>   {e = new ASTId(token.image); return e ; }
-
-         { return e; }
 |	<NOT> e = factor() { l = new ASTNot(e) ; return l ; }
-| 	<VAR> <LPAR> e = logicalOr() <RPAR> { l = new ASTVar(e) ; return l ; }
-|	<DEREF> e = factor() { l = new ASTDeref(e) ; return l ; }
+| 	<VAR> <LPAR> e = decl() <RPAR> { l = new ASTVar(e) ; return l ; }
+|	<DEREF> e = callFun() { l = new ASTDeref(e) ; return l ; }
 |	<TRUE> { l = new ASTBool(true) ; return l ;}
 |	<FALSE> { l = new ASTBool(false) ; return l ;}
 |	<READINT> <LPAR> <RPAR> { return new ASTReadInt() ; }
@@ -253,13 +251,12 @@ IASTExpression factor() :
 |	<STRING> { return new ASTString(token.image) ; }
 |	<DO> s = cmd() <RETURN> e = logicalOr() <END> { return new ASTDoReturn(s, e) ; }
 |	<MINUS> e = factor() { return new ASTSymetric(e) ; }
-|	<LBRACK> { r = new ASTRecord() ; } <ID> { id = token.image ; } 
-	<EQ> e = logicalOr() { r.addRec(id, e) ; } (<COMMA> <ID> { id = token.image ; } 
-	<EQ> e = logicalOr() { r.addRec(id, e) ; })*<RBRACK> { return r ; }
+|	<LBRACK> { r = new ASTRecord() ; } (<ID> { id = token.image ; } 
+	<EQ> e = decl() { r.addRec(id, e) ; })+<RBRACK> { return r ; }
 |	<FUN> e = fun() { return e ; }
 | 	<PROC> e = proc() { return e ; }
-|	<ARRAY> <LPAR> e = exp() <COMMA> l = exp() <RPAR> { return new ASTArray(e, l) ; }
-| 	<LENGTH> <LPAR> e = exp() <RPAR> { return new ASTLength(e); }
+|	<ARRAY> <LPAR> e = decl() <COMMA> l = exp() <RPAR> { return new ASTArray(e, l) ; }
+| 	<LENGTH> <LPAR> e = decl() <RPAR> { return new ASTLength(e); }
 }
 
 IASTExpression fun() :
@@ -270,7 +267,7 @@ IASTExpression fun() :
 {
 	{ f = new ASTFun() ; }
 	(<ID> { f.addParam(token.image) ; } (<COMMA> <ID> { f.addParam(token.image) ;})*)?
-	<IS> e = logicalOr() { f.setExpression(e) ; } <END>
+	<IS> e = decl() { f.setExpression(e) ; } <END>
 	{ return f ; }
 }
 
@@ -283,6 +280,6 @@ IASTExpression proc() :
 	{ p = new ASTProc() ;}
 	(<ID> { p.addParam(token.image) ; }
 	(<COMMA> <ID> { p.addParam(token.image) ; })*)?
-	<IS> s = state() { p.setStatement(s) ; } <END>
+	<IS> s = cmd() { p.setStatement(s) ; } <END>
 	{ return p ; }
 }

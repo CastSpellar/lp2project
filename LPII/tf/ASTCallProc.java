@@ -24,9 +24,11 @@ public class ASTCallProc implements IASTStatement {
 		IASTStatement closExp = closure.getStatement() ;
 		IEnv closEnv = closure.getEnv() ;
 		IEnv nEnv = closEnv.beginScope() ;
-		for(String par: closure.getParams())
-			for(IASTExpression exp: params)
-				nEnv.assoc(par, exp.evaluate(env)) ;
+		int i = 0 ;
+		for(String par: closure.getParams()){
+			IASTExpression expr = params.get(i++) ;
+			nEnv.assoc(par, expr.evaluate(env)) ;
+		}
 		closExp.evaluate(nEnv) ;
 	}
 
