@@ -93,7 +93,7 @@ IASTStatement cmd() :
   ASTCallProc pc ;
  }
 {
-	exp1 = callFun() (
+	exp1 = callFactor() (
 	<ASSIGN> exp2 = logical() 
 	{ 	l = new ASTAssign(exp1, exp2) ; return l ;}
 | 	<LPAR> { pc = new ASTCallProc(exp1) ; } 
@@ -179,7 +179,7 @@ IASTExpression term() :
 	)*
 	{ return l; }
 |	<IF> l = logical() <THEN> r = logical3() { ife = new ASTIfExpression(l, r) ; } 
-	[ <ELSE> elseExp = logical3() { ife.setElse(elseExp) ; } ] 
+		<ELSE> elseExp = logical3() { ife.setElse(elseExp) ; }
 	<END> 
 	{ return ife ; }
 |	<DECL> l = declExp() 
@@ -189,16 +189,25 @@ IASTExpression term() :
 IASTExpression callFun():{
   IASTExpression f, e;
   ASTCallFun cf;
+}
+{
+	f = callFactor() (
+	(<LPAR> { cf = new ASTCallFun(f) ; } 
+		[ e = logical() { cf.addArg(e) ; } (<COMMA> e = logical() { cf.addArg(e) ; })* ]
+	<RPAR>) { f = cf ; } 
+	)*
+	{ return f ; }
+}
+
+IASTExpression callFactor():{
+  IASTExpression f, e;
   ASTCallArray ca;
   ASTCallRec cr ;
 }
 {
 	f = factor() (
-	(<LPAR> { cf = new ASTCallFun(f) ; } 
-		[ e = logical() { cf.addArg(e) ; } (<COMMA> e = logical() { cf.addArg(e) ; })* ]
-	<RPAR>) { f = cf ; }
-|	<DOT> <ID> { cr = new ASTCallRec(f, token.image) ; f = cr ;}
-|	<LBRACK> { ca = new ASTCallArray(f) ; } e = logical() <RBRACK> { ca.setPos(e) ; f = ca ; } 
+	<DOT> <ID> { cr = new ASTCallRec(f, token.image) ; f = cr ;}
+|	<LBRACK> { ca = new ASTCallArray(f) ; } e = logical() <RBRACK> { ca.setPos(e) ; f = ca ; }
 	)*
 	{ return f ; }
 }
