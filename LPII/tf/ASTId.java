@@ -15,8 +15,10 @@ public class ASTId implements IASTExpression {
 
 	public void gen(CodeSeq code, ICodeEnv env) {
 		// TODO Auto-generated method stub
-		int location = env.find(id) ;
-		code.gen_ldloc(location) ;
+		int[] location = env.find(id) ;
+		code.gen_ldloc("stackframe") ;
+		code.gen_ldc_i4(location[0]) ;
+		code.gen_ldc_i4(location[1]) ;
+		code.gen_stack_get() ;
 	}
-
 }

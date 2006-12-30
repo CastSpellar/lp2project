@@ -28,7 +28,24 @@ public class ASTFun implements IASTExpression {
 
 	public void gen(CodeSeq code, ICodeEnv env) {
 		// TODO Auto-generated method stub
-
+		int pos = code.code.size() ;
+		code.gen_ldloc("stackframe") ;
+		
 	}
+	
+	/*int pos = code.getCodesSize();
+		code.gen_ldloc("stackframe");
+		code.gen_ldftn("object" , new String("f"+pos) );
+		code.gen_closure();
+				
+		code.switchNext();
+		code.gen_func( pos );
+		cenv=cenv.beginScope();
+		Iterator<String> it = args.iterator();
+		while( it.hasNext() )
+			cenv.AssocC(it.next());
+		exp.gen(code, cenv);
+		code.switchPrevious();
+		cenv.endScope();*/
 
 }

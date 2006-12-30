@@ -16,8 +16,8 @@ public class Calc {
 			ast = parser.Start();
 			ast.evaluate(env);
 			code = new CodeSeq(1000);
-//			ast.gen(code, codeEnv);
-//			code.generate("Calc.as", codeEnv.getMax());
+			ast.gen(code, codeEnv);
+			code.generate("Calc.as");
 		} catch (ParseException x) {
 			System.out.println("Syntax Error.");
 		}

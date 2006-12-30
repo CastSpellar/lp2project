@@ -34,7 +34,23 @@ public class ASTDeclExpression implements IASTExpression {
 
 	public void gen(CodeSeq code, ICodeEnv env) {
 		// TODO Auto-generated method stub
-
+		env = env.beginScope() ;
+		code.gen_ldloc("stackframe") ;
+		code.gen_ldc_i4(decls.size()) ;
+		code.gen_newStackFrame() ;
+		code.gen_stloc("stackframe") ;
+		for(IdExp id: decls){
+			code.gen_ldloc("stackframe") ;
+			env.newVar(id.getId()) ;
+			int pos = env.find(id.getId())[1] ;
+			id.getExp().gen(code, env) ;
+			code.gen_ldc_i4(pos) ;
+			code.gen_frameset() ;
+		}
+		exp.gen(code, env) ;
+		code.gen_ldloc("stackframe") ;
+		code.gen_closeframe() ;
+		code.gen_stloc("stackframe") ;
+		env = env.endScope() ;
 	}
-
 }
