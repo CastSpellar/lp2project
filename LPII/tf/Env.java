@@ -93,7 +93,7 @@ public class Env implements IEnv {
 			if(prevEnv != null)
 				prevEnv.update(id, value) ;
 			else
-				throw new IdentifierNotFoundException("Identifier not defined in the Enviroment") ;
+				env.put(id, value) ;
 	}
 	
 	public int getNDecls() {
