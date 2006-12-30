@@ -20,7 +20,8 @@ public class ASTDoReturn implements IASTExpression {
 
 	public void gen(CodeSeq code, ICodeEnv env) {
 		// TODO Auto-generated method stub
-
+		statement.gen(code, env) ;
+		expression.gen(code, env) ;
 	}
 
 }

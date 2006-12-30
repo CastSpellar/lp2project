@@ -17,7 +17,7 @@ public interface ICodeEnv {
 	 * Método usado para retornar a posição do identificador dado
 	 * por argumento.
 	 * */
-	int find(String id) ;
+	int[] find(String id) ;
 	
 	/**
 	 * Método invocado para carregar uma nova variável no ambiente

@@ -28,7 +28,14 @@ public class ASTIfExpression implements IASTExpression {
 
 	public void gen(CodeSeq code, ICodeEnv env) {
 		// TODO Auto-generated method stub
-
+		exp.gen(code, env) ;
+		int label1 = code.pc ;
+		code.get_bool() ;
+		code.gen_br(false, label1) ;
+		thenClause.gen(code, env) ;
+		int label2 = code.pc ;
+		code.gen_br(true, label2) ;
+		elseClause.gen(code, env) ;
+		code.gen_label(label2) ;
 	}
-
 }

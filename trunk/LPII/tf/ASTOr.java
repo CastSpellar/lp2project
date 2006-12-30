@@ -18,7 +18,9 @@ private IASTExpression left ;
 
 	public void gen(CodeSeq code, ICodeEnv env) {
 		// TODO Auto-generated method stub
-
+		left.gen(code, env) ;
+		right.gen(code, env) ;
+		code.gen_or() ;
 	}
 
 }

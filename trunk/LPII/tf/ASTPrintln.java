@@ -12,7 +12,7 @@ public class ASTPrintln implements IASTStatement {
 
 	public void gen(CodeSeq code, ICodeEnv env) {
 		// TODO Auto-generated method stub
-
+		code.gen_println() ;
 	}
 
 }

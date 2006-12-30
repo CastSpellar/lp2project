@@ -36,10 +36,32 @@ public class CodeEnv implements ICodeEnv {
 		prev.setMaxVar(maxVar) ;
 		return prev ;
 	}
+	
+	public int getCurrentLevel(){
+		int result = 0 ;
+		CodeEnv current = this ;
+		while(current != null){
+			current = (CodeEnv) current.prev ;
+			result++ ;
+		}
+		return result ;
+	}
 
-	public int find(String id) {
+	public int[] find(String id) {
 		// TODO Auto-generated method stub
-		if(table.containsKey(id))
+		int[] result = new int[2] ;
+		result[0] = -1 ;
+		result[1] = -1 ;
+		CodeEnv current = this ;
+		for(int i = 0; i < getCurrentLevel(); i++){
+			if(current.table.containsKey(id)){
+				result[0] = i ;
+				result[1] = table.get(id) ;
+				return result ;
+			}	
+		}
+		return result ;
+		/*if(table.containsKey(id))
 			return table.get(id) ;
 		else
 			if (prev != null)
@@ -47,7 +69,7 @@ public class CodeEnv implements ICodeEnv {
 			else
 				//Gerar Excepção 
 				System.exit(0) ;
-		return 0;
+		return 0;*/
 	}
 
 	public int getCurrVar() {
