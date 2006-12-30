@@ -35,7 +35,7 @@ public class ASTDeclStatement implements IASTStatement {
 		env = env.beginScope() ;
 		code.gen_ldloc("stackframe") ;
 		code.gen_ldc_i4(decls.size()) ;
-		code.gen_newStackFrame() ;
+		code.gen_new_stack_frame() ;
 		code.gen_stloc("stackframe") ;
 		for(IdExp id: decls){
 			code.gen_ldloc("stackframe") ;

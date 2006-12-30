@@ -15,7 +15,8 @@ public class ASTDeref implements IASTExpression {
 
 	public void gen(CodeSeq code, ICodeEnv env) {
 		// TODO Auto-generated method stub
-
+		exp.gen(code, env) ;
+		code.gen_get_cell() ;
 	}
 
 }

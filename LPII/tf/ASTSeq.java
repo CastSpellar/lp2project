@@ -19,7 +19,8 @@ public class ASTSeq implements IASTStatement {
 
 	public void gen(CodeSeq code, ICodeEnv env) {
 		// TODO Auto-generated method stub
-
+		preStatement.gen(code, env) ;
+		posStatement.gen(code, env) ;
 	}
 
 }
