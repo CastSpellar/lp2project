@@ -81,7 +81,7 @@ IASTStatement Start() :
 IASTStatement seq() :
 { IASTStatement l, r ;}
 {
-	l = cmd() ( <SEQ> r = seq() { l = new ASTSeq(l, r) ;})*
+	l = cmd() ( <SEQ> r = cmd() { l = new ASTSeq(l, r) ;})*
 	{ return l ;}
 }
 
