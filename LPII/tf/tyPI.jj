@@ -14,11 +14,12 @@ SKIP :
         " "
 |       "\r"
 |       "\t"
+|		"\n"
 }
 
 TOKEN :
 {
-        < EOL: "\n" >
+		< EOL: ";;">
 |		< DECL: "decl" >
 |		< EQ: "=" >
 |		< DIFF: "!=" >
