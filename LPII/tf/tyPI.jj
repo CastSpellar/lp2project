@@ -104,6 +104,7 @@ IASTStatement cmd() :
 	{	l = new ASTWhile(exp1, r) ; return l ;}
 |	<IF> exp1 = logical() <THEN> l = cmd() { ifstat = new ASTIf(exp1, l) ; }
 	[ <ELSE> r = seq() { ifstat.setElse(r) ; } ] 
+	<END>
 	{ 	return ifstat ; }
 |	<DECL> s = declStat()
 	{ return s; }
