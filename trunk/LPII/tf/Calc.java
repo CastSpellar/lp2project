@@ -8,8 +8,8 @@ public class Calc {
 		Parser parser = new Parser(System.in);
 		IASTStatement ast;
 		CodeSeq code;
-		IEnv env = new Env() ;
-		ICodeEnv codeEnv = new CodeEnv() ;
+		IEnv env = new Env();
+		ICodeEnv codeEnv = new CodeEnv();
 		System.out.print("Enter Expression: ");
 		System.out.flush();
 		try {

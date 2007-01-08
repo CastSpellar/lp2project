@@ -1,26 +1,26 @@
 package tf;
 
 public class ASTSeq implements IASTStatement {
-	
-	private IASTStatement preStatement ;
-	
-	private IASTStatement posStatement ;
-	
-	public ASTSeq(IASTStatement preStatement, IASTStatement poStatement){
-		this.preStatement = preStatement ;
-		this.posStatement = poStatement ;
+
+	private IASTStatement preStatement;
+
+	private IASTStatement posStatement;
+
+	public ASTSeq(IASTStatement preStatement, IASTStatement poStatement) {
+		this.preStatement = preStatement;
+		this.posStatement = poStatement;
 	}
 
 	public void evaluate(IEnv env) {
 		// TODO Auto-generated method stub
-		preStatement.evaluate(env) ;
-		posStatement.evaluate(env) ;
+		preStatement.evaluate(env);
+		posStatement.evaluate(env);
 	}
 
 	public void gen(CodeSeq code, ICodeEnv env) {
 		// TODO Auto-generated method stub
-		preStatement.gen(code, env) ;
-		posStatement.gen(code, env) ;
+		preStatement.gen(code, env);
+		posStatement.gen(code, env);
 	}
 
 }
