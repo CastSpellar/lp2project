@@ -4,53 +4,53 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class ASTDeclExpression implements IASTExpression {
-	
-	private List<IdExp> decls ;
-	
-	private IASTExpression exp ;
-	
-	public ASTDeclExpression(){
-		decls = new LinkedList<IdExp>() ;
+
+	private List<IdExp> decls;
+
+	private IASTExpression exp;
+
+	public ASTDeclExpression() {
+		decls = new LinkedList<IdExp>();
 	}
-	
-	public void setExpression(IASTExpression exp){
-		this.exp = exp ;
+
+	public void setExpression(IASTExpression exp) {
+		this.exp = exp;
 	}
-	
-	public void addDecl(String id, IASTExpression exp){
-		decls.add(new IdExp(id, exp)) ;
+
+	public void addDecl(String id, IASTExpression exp) {
+		decls.add(new IdExp(id, exp));
 	}
 
 	public IVal evaluate(IEnv env) {
 		// TODO Auto-generated method stub
-		env = env.beginScope() ;
-		for(IdExp var: decls){
-			env.assoc(var.getId(), var.getExp().evaluate(env)) ;
+		env = env.beginScope();
+		for (IdExp var : decls) {
+			env.assoc(var.getId(), var.getExp().evaluate(env));
 		}
-		IVal returnVal = exp.evaluate(env) ;
-		env.endScope() ;
-		return returnVal ;
+		IVal returnVal = exp.evaluate(env);
+		env.endScope();
+		return returnVal;
 	}
 
 	public void gen(CodeSeq code, ICodeEnv env) {
 		// TODO Auto-generated method stub
-		env = env.beginScope() ;
-		code.gen_ldloc("stackframe") ;
-		code.gen_ldc_i4(decls.size()) ;
-		code.gen_new_stack_frame() ;
-		code.gen_stloc("stackframe") ;
-		for(IdExp id: decls){
-			code.gen_ldloc("stackframe") ;
-			env.newVar(id.getId()) ;
-			int pos = env.find(id.getId())[1] ;
-			id.getExp().gen(code, env) ;
-			code.gen_ldc_i4(pos) ;
-			code.gen_frameset() ;
+		env = env.beginScope();
+		code.gen_ldloc("stackframe");
+		code.gen_ldc_i4(decls.size());
+		code.gen_new_stack_frame();
+		code.gen_stloc("stackframe");
+		for (IdExp id : decls) {
+			code.gen_ldloc("stackframe");
+			int pos = env.newVar(id.getId());
+			//int pos = env.find(id.getId())[1];
+			id.getExp().gen(code, env);
+			code.gen_ldc_i4(pos);
+			code.gen_frameset();
 		}
-		exp.gen(code, env) ;
-		code.gen_ldloc("stackframe") ;
-		code.gen_closeframe() ;
-		code.gen_stloc("stackframe") ;
-		env = env.endScope() ;
+		exp.gen(code, env);
+		code.gen_ldloc("stackframe");
+		code.gen_closeframe();
+		code.gen_stloc("stackframe");
+		env = env.endScope();
 	}
 }

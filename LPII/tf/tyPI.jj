@@ -44,7 +44,7 @@ TOKEN :
 |		< ASSIGN: ":=" >
 |		< WHILE: "while" >
 |		< DO: "do" >
-|		< IF: "if" >
+|		< IF: "se" >
 |		< THEN: "then" >
 |		< ELSE: "else" >
 |		< SEQ: ";" >
@@ -144,12 +144,12 @@ IASTExpression logical3() :
 }
 {
 	l = exp() ( 
-	<EQ> r = exp() 							{ l = new ASTEqual(l, r) ;}
-| 	<GREATER> r = exp() 					{ l = new ASTGreater(l, r) ;}
-|	<SMALLER> r = exp() 					{ l = new ASTSmaller(l, r) ; }
+	<EQ> r = exp() 	{ l = new ASTEqual(l, r) ;}
+| 	<GREATER> r = exp()	{ l = new ASTGreater(l, r) ;}
+|	<SMALLER> r = exp()	{ l = new ASTSmaller(l, r) ; }
 | 	<GREATEROREQUAL> r = exp() 	{ l = new ASTGreaterOrEqual(l, r) ; }
 | 	<SMALLEROREQUAL> r = exp() 	{ l = new ASTSmallerOrEqual(l, r) ; }
-| 	<DIFF> r = exp() 						{ l = new ASTDiff(l, r) ; }
+| 	<DIFF> r = exp() { l = new ASTDiff(l, r) ; }
 	)*
 	{ return l ; }
 }
@@ -220,26 +220,26 @@ IASTExpression factor() :
 	String id ;
 }
 {
-    <CONSTANT> 																	{ e = new ASTNum(Integer.parseInt(token.image)); return e;}
-|   <LPAR> e = logical() <RPAR> 												{ return e ; }
-|	<ID>   																				{e = new ASTId(token.image); return e ; }
-|	<NOT> e = factor() 																{ l = new ASTNot(e) ; return l ; }
-| 	<VAR> <LPAR> e = logical() <RPAR> 									{ l = new ASTVar(e) ; return l ; }
-|	<DEREF> e = callFun() 														{ l = new ASTDeref(e) ; return l ; }
-|	<TRUE> 																			{ l = new ASTBool(true) ; return l ;}
-|	<FALSE> 																			{ l = new ASTBool(false) ; return l ;}
-|	<READINT> <LPAR> <RPAR> 												{ return new ASTReadInt() ; }
-| 	<READSTR> <LPAR> <RPAR> 											{ return new ASTReadStr() ; }
-|	<STRING> 																		{ return new ASTString(token.image) ; }
-|	<DO> s = seq() <RETURN> e = logical() <END>					{ return new ASTDoReturn(s, e) ; }
-|	<MINUS> e = factor() 															{ return new ASTSymetric(e) ; }
+    <CONSTANT> 	{ e = new ASTNum(Integer.parseInt(token.image)); return e;}
+|   <LPAR> e = logical() <RPAR> { return e ; }
+|	<ID>  {e = new ASTId(token.image); return e ; }
+|	<NOT> e = factor() 				{ l = new ASTNot(e) ; return l ; }
+| 	<VAR> <LPAR> e = logical() <RPAR> { l = new ASTVar(e) ; return l ; }
+|	<DEREF> e = callFun() { l = new ASTDeref(e) ; return l ; }
+|	<TRUE> { l = new ASTBool(true) ; return l ;}
+|	<FALSE> { l = new ASTBool(false) ; return l ;}
+|	<READINT> <LPAR> <RPAR> { return new ASTReadInt() ; }
+| 	<READSTR> <LPAR> <RPAR> { return new ASTReadStr() ; }
+|	<STRING> { return new ASTString(token.image) ; }
+|	<DO> s = seq() <RETURN> e = logical() <END>	{ return new ASTDoReturn(s, e) ; }
+|	<MINUS> e = factor() { return new ASTSymetric(e) ; }
 |	<LBRACK> { r = new ASTRecord() ; } 
 		( <ID> { id = token.image ; } <EQ> e = logical() { r.addRec(id, e) ; } )+
-	<RBRACK>																		{ return r ; }
-|	<FUN> e = fun() 																{ return e ; }
-| 	<PROC> e = proc() 																{ return e ; }
+	<RBRACK>	{ return r ; }
+|	<FUN> e = fun() { return e ; }
+| 	<PROC> e = proc() { return e ; }
 |	<ARRAY> <LPAR> e = logical() <COMMA> l = exp() <RPAR> 	{ return new ASTArray(e, l) ; }
-| 	<LENGTH> <LPAR> e = logical() <RPAR> 								{ return new ASTLength(e); }
+| 	<LENGTH> <LPAR> e = logical() <RPAR> { return new ASTLength(e); }
 }
 
 IASTStatement declStat() :

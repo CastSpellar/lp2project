@@ -1,11 +1,11 @@
 package tf;
 
 public class ASTVar implements IASTExpression {
-	
-	private IASTExpression exp ;
-	
-	public ASTVar(IASTExpression exp){
-		this.exp = exp ;
+
+	private IASTExpression exp;
+
+	public ASTVar(IASTExpression exp) {
+		this.exp = exp;
 	}
 
 	public IVal evaluate(IEnv env) {
